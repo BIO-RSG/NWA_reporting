@@ -21,8 +21,7 @@ last_year <- 2020
 
 # range of years to use for reference when computing climatology mean, standard
 # deviation, and anomalies (must match those used in processing)
-first_ref_year <- 1999
-last_ref_year <- 2010
+ref_years <- 1999:2010
 
 input_path <- "AZOMP/02_processed_data/"
 
@@ -181,7 +180,8 @@ if (data_type != "bloom") {
                              variable_log = variable_log,
                              variable_neg = variable_neg,
                              ytitles = ytitles,
-                             late_sampling = late_sampling)
+                             late_sampling = late_sampling,
+                             ref_years = ref_years)
     
     # Write time series plots to png files
     for (i in 1:length(allplots)) {

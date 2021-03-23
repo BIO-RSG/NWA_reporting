@@ -25,8 +25,7 @@ first_year <- 2003
 last_year <- 2020
 
 # range of years to use for reference when computing climatology mean, standard deviation, and anomalies
-first_ref_year <- 2003
-last_ref_year <- 2010
+ref_years <- 1999:2010
 
 region_str <- c("GS", "CLS", "LAS")
 
@@ -34,13 +33,13 @@ input_path <- "AZOMP/01_raw_data/"
 input_file <- "modis_atlantic_poly4_2003-2021_daily_loggedChla_Gaussian_created_2021-03-18-181022_fulltimeseries/bloom_fit_params.csv"
 
 output_path <- "AZOMP/02_processed_data/"
-output_file <- paste0(output_path,"Bloom_parameters_processed_",sensor,"_",interval,"_refyears",first_ref_year,"-",last_ref_year,"_timeseries",first_year,"-",last_year,".RData")
+output_file <- paste0(output_path,"Bloom_parameters_processed_",sensor,"_",interval,"_refyears",paste0(range(ref_years), collapse="-"),"_timeseries",first_year,"-",last_year,".RData")
 
 
 #*******************************************************************************
 # READ DATA, FORMAT/REARRANGE
 
-if (first_ref_year < first_year | last_ref_year > last_year) {stop("Reference years beyond range of selected years")}
+if (ref_years[1] < first_year | ref_years[length(ref_years)] > last_year) {stop("Reference years beyond range of selected years")}
 
 # load and format the data from the input file
 df_data <- read.csv(paste0(input_path, input_file)) %>%
@@ -69,7 +68,7 @@ df_means_annual <- df_data %>%
     dplyr::select(variable, region, year, annual_mean, annual_sd)
 
 # annual climatology
-df_climatology_annual <- annual_climatologies(df_means_annual, first_ref_year, last_ref_year)
+df_climatology_annual <- annual_climatologies(df_means_annual, ref_years = ref_years)
 
 # annual anomalies
 df_anomaly_annual <- annual_anomalies(df_means_annual, df_climatology_annual)

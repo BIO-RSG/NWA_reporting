@@ -4,12 +4,12 @@
 # compute annual climatologies for the reference period
 # input:
 #       df: dataframe with columns variable, transect (region), year, annual_mean
-#       first_ref_year to last_ref_year: single numeric values to compute a sequence of years to use as reference for the calculations
-annual_climatologies <- function(df, first_ref_year, last_ref_year) {
+#       ref_years: numeric vector of years to use as reference for the calculations
+annual_climatologies <- function(df, ref_years) {
     
     require(dplyr)
     df %>%
-        dplyr::filter(between(year, first_ref_year, last_ref_year)) %>%
+        dplyr::filter(year %in% ref_years) %>%
         # remove Inf
         dplyr::mutate(annual_mean=ifelse(!is.finite(annual_mean), NA, annual_mean)) %>%
         dplyr::group_by(variable, region) %>%
@@ -41,7 +41,8 @@ annual_anomalies <- function(df, df_climatology) {
 #===============================================================================
 # CREATE TIME SERIES PLOTS AND RETURN THEM IN A LIST
 
-get_TS_plots <- function(df, variable_str, variable_lbl, region_str, region_lbl, region_col, variable_log, variable_neg, ytitles, late_sampling = c()) {
+get_TS_plots <- function(df, variable_str, variable_lbl, region_str, region_lbl, region_col,
+                         variable_log, variable_neg, ytitles, late_sampling = c(), ref_years) {
     
     require(ggplot2)
     require(patchwork)
@@ -90,7 +91,7 @@ get_TS_plots <- function(df, variable_str, variable_lbl, region_str, region_lbl,
             ts_col_str <- region_col[i_transect]
             
             trans_data <- var_data %>% dplyr::filter(region==ts_str)
-            tmp_df <- trans_data %>% dplyr::filter(between(year, first_ref_year, last_ref_year))
+            tmp_df <- trans_data %>% dplyr::filter(year %in% ref_years)
             tmp_mean <- mean(tmp_df$annual_mean, na.rm=TRUE)
             tmp_mean_early <- tmp_df %>% dplyr::filter(!late) %>% dplyr::select(annual_mean) %>% unlist() %>% mean(na.rm=TRUE)
             tmp_mean_late <- tmp_df %>% dplyr::filter(late) %>% dplyr::select(annual_mean) %>% unlist() %>% mean(na.rm=TRUE)

@@ -27,8 +27,7 @@ last_year <- 2020
 
 # range of years to use for reference when computing climatology mean, standard
 # deviation, and anomalies
-first_ref_year <- 1999
-last_ref_year <- 2010
+ref_years <- 1999:2010
 
 # subset to ar7w line / boxes CLS/LAS/GS? (for data extracted from BioCHEM)
 azomp_subset <- TRUE
@@ -70,16 +69,16 @@ data_file <- "AZOMP_DIS_Data_ChlaNutrients_20210317.RData"
 output_path <- "AZOMP/02_processed_data/"
 
 output_file <- paste0(output_path, "AZOMP_ChlaNutrients_",
-                      "_refyears", first_ref_year, "-", last_ref_year,
+                      "_refyears", paste0(range(ref_years), collapse="-"),
                       "_timeseries", first_year, "-", last_year, "_",
                       ifelse(integrated_depth, "integrated_profile", "avg_profile"),
-                      "depth0-150_processed.RData")
+                      "_processed.RData")
 
 
 #*******************************************************************************
 # LOAD DATA
 
-if (first_ref_year < first_year | last_ref_year > last_year) {stop("Reference years beyond range of selected years")}
+if (ref_years[1] < first_year | ref_years[length(ref_years)] > last_year) {stop("Reference years beyond range of selected years")}
 
 # load sample_id
 load(paste0(input_path, sample_file))
@@ -301,7 +300,7 @@ df_data_depth_summary <- df_data_depth_summary %>%
     tidyr::spread(variable, value) %>%
     dplyr::arrange(desc(season), region, year)
 
-df_climatology_annual <- annual_climatologies(df_means_annual, first_ref_year, last_ref_year)
+df_climatology_annual <- annual_climatologies(df_means_annual, ref_years = ref_years)
 df_anomaly_annual <- annual_anomalies(df_means_annual, df_climatology_annual) %>% dplyr::filter(!is.na(anom_value))
 
 #*******************************************************************************

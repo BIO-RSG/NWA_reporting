@@ -24,8 +24,7 @@ last_year <- 2020
 
 # range of years to use for reference when computing climatology mean, standard
 # deviation, and anomalies
-first_ref_year <- 1999
-last_ref_year <- 2010
+ref_years <- 1999:2010
 
 # location of raw data and file
 input_path <- "AZOMP/01_raw_data/"
@@ -37,12 +36,15 @@ output_path <- "AZOMP/02_processed_data/"
 variable <- "temperature"
 
 output_file <- paste0("AZOMP_", variable,
-                      "_refyears", first_ref_year, "-", last_ref_year,
-                      "_timeseries", first_year, "-", last_year, "_processed.RData")
+                      "_refyears", paste0(range(ref_years), collapse="-"),
+                      "_timeseries", first_year, "-", last_year, "nolaterefyears_processed.RData")
+
 
 
 #*******************************************************************************
 # LOAD, FORMAT, AND PROCESS DATA
+
+if (ref_years[1] < first_year | ref_years[length(ref_years)] > last_year) {stop("Reference years beyond range of selected years")}
 
 df_means_annual <- read.csv(paste0(input_path, input_file)) %>%
     dplyr::mutate(variable=trimws(as.character(variable)),
@@ -53,7 +55,7 @@ df_means_annual <- read.csv(paste0(input_path, input_file)) %>%
     dplyr::select(variable, region, year, annual_mean, annual_sd)
 
 # annual climatology
-df_climatology_annual <- annual_climatologies(df_means_annual, first_ref_year, last_ref_year)
+df_climatology_annual <- annual_climatologies(df_means_annual, ref_years=ref_years)
 
 # annual anomalies
 df_anomaly_annual <- annual_anomalies(df_means_annual, df_climatology_annual)
