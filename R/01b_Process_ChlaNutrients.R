@@ -75,6 +75,17 @@ output_file <- paste0(output_path, "AZOMP_ChlaNutrients_",
                       "_processed.RData")
 
 
+# REMOVE LATE SAMPLING YEARS FROM REFERENCE YEARS
+
+# cutoff day of year between "early" and "late" sampling
+cutoff <- 170
+# late sampling years will have open circles in the time series plots and greyed out anomaly boxes in the scorecards
+late_sampling <- read.csv("AZOMP/01_raw_data/Cruise_bloom_date.csv") %>% dplyr::filter(AR7W_start_doy >= cutoff)
+late_sampling <- as.numeric(unique(unlist(late_sampling$year)))
+ref_years <- ref_years[!(ref_years %in% late_sampling)]
+
+
+
 #*******************************************************************************
 # LOAD DATA
 
@@ -160,7 +171,8 @@ df_data_avg_method <- df_data %>%
 
 
 #*******************************************************************************
-# CALCULATE AVERAGE AND INTEGRATED VALUES IN THE WATER COLUMN FOR A GIVEN PARAMETER AND DEPTH LAYER (e.g. 0-100m or >100m)
+# CALCULATE AVERAGE OR INTEGRATED VALUES IN THE WATER COLUMN FOR A GIVEN PARAMETER AND DEPTH LAYER (e.g. 0-100m or >100m)
+# Note that if an event_id only has a value at a single depth, integration won't work. You can use the mean in this case instead.
 
 # The values for each event_id are integrated over depth for AZMP (they typically have shallower depths).
 # For AZOMP (Lab Sea), try both integrating and averaging.
@@ -174,17 +186,43 @@ if (integrated_depth) {
     data("nwa_lats_4km", package="oceancolouR")
     data("nwa_lons_4km", package="oceancolouR")
     for (i in 1:length(annual_indices)) {
-        if (depth_layer[i]==1) {tmp_depths <- depths1
-        } else if (depth_layer[i]==2) {tmp_depths <- depths2}
-        if (is.infinite(tmp_depths[2])) {tmp_depths[2] <- 10000}
-        df_data_depth_summary <- dplyr::bind_rows(df_data_depth_summary,
-                                                  df_data_avg_method %>%
-                                                      dplyr::filter(parameter_name==param_names[i], start_depth >= tmp_depths[1], start_depth < tmp_depths[2]) %>%
-                                                      dplyr::group_by(event_id) %>%
-                                                      dplyr::summarize(nominal_depth=get_bathy(mean(longitude), mean(latitude), vlon=nwa_lons_4km, vlat=nwa_lats_4km, vvar=nwa_bath_4km),
-                                                                       value=DIS_Integrate_Profile(depth=start_depth, value=data_value, nominal_depth=nominal_depth, depth_range=tmp_depths)) %>%
-                                                      dplyr::ungroup() %>%
-                                                      dplyr::mutate(parameter_name=annual_indices[i]))
+        
+        # temporary: integrate the top layer, average the bottom layer
+        if (depth_layer[i]==1) {
+            tmp_depths <- depths1
+            df_data_depth_summary <- dplyr::bind_rows(df_data_depth_summary,
+                                                      df_data_avg_method %>%
+                                                          dplyr::filter(parameter_name==param_names[i], start_depth >= tmp_depths[1], start_depth < tmp_depths[2]) %>%
+                                                          dplyr::group_by(event_id) %>%
+                                                          dplyr::summarize(nominal_depth=get_bathy(mean(longitude), mean(latitude), vlon=nwa_lons_4km, vlat=nwa_lats_4km, vvar=nwa_bath_4km),
+                                                                           value=DIS_Integrate_Profile(depth=start_depth, value=data_value, nominal_depth=nominal_depth, depth_range=tmp_depths)) %>%
+                                                          dplyr::ungroup() %>%
+                                                          dplyr::mutate(parameter_name=annual_indices[i]))
+        } else if (depth_layer[i]==2) {
+            tmp_depths <- depths2
+            if (is.infinite(tmp_depths[2])) {tmp_depths[2] <- 10000}
+            df_data_depth_summary <- dplyr::bind_rows(df_data_depth_summary,
+                                                      df_data_avg_method %>%
+                                                          dplyr::filter(parameter_name==param_names[i], start_depth >= tmp_depths[1], start_depth < tmp_depths[2]) %>%
+                                                          dplyr::group_by(event_id) %>%
+                                                          dplyr::summarize(value=ifelse(sum(is.finite(data_value))==0, NA, mean(data_value, na.rm=TRUE))) %>%
+                                                          dplyr::ungroup() %>%
+                                                          dplyr::mutate(parameter_name=annual_indices[i]))
+        }
+        
+        
+        # if (depth_layer[i]==1) {tmp_depths <- depths1
+        # } else if (depth_layer[i]==2) {tmp_depths <- depths2}
+        # if (is.infinite(tmp_depths[2])) {tmp_depths[2] <- 10000}
+        # df_data_depth_summary <- dplyr::bind_rows(df_data_depth_summary,
+        #                                           df_data_avg_method %>%
+        #                                               dplyr::filter(parameter_name==param_names[i], start_depth >= tmp_depths[1], start_depth < tmp_depths[2]) %>%
+        #                                               dplyr::group_by(event_id) %>%
+        #                                               dplyr::summarize(nominal_depth=get_bathy(mean(longitude), mean(latitude), vlon=nwa_lons_4km, vlat=nwa_lats_4km, vvar=nwa_bath_4km),
+        #                                                                value=DIS_Integrate_Profile(depth=start_depth, value=data_value, nominal_depth=nominal_depth, depth_range=tmp_depths)) %>%
+        #                                               dplyr::ungroup() %>%
+        #                                               dplyr::mutate(parameter_name=annual_indices[i]))
+        
     }
     
 } else {
@@ -232,7 +270,9 @@ for (i_variable in annual_indices) {
             dplyr::mutate(year=factor(year)) %>%
             #               season=factor(season),
             #               station=factor(station)) %>%
-            dplyr::mutate(density=ifelse(variable==paste0("Chlorophyll_A_",depths1[1],"_",depths1[2]), log10(value+1), value))
+            # # 2021-03-24 decided not to log chla, to be consistent with nutrients calculations
+            dplyr::mutate(density = value)
+            #dplyr::mutate(density=ifelse(variable==paste0("Chlorophyll_A_",depths1[1],"_",depths1[2]), log10(value+1), value))
         
         
         # # fit a linear model that can be used to fill in the blanks and adjust

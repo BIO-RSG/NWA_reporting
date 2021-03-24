@@ -37,8 +37,17 @@ variable <- "temperature"
 
 output_file <- paste0("AZOMP_", variable,
                       "_refyears", paste0(range(ref_years), collapse="-"),
-                      "_timeseries", first_year, "-", last_year, "nolaterefyears_processed.RData")
+                      "_timeseries", first_year, "-", last_year, "_processed.RData")
 
+
+# REMOVE LATE SAMPLING YEARS FROM REFERENCE YEARS
+
+# cutoff day of year between "early" and "late" sampling
+cutoff <- 170
+# late sampling years will have open circles in the time series plots and greyed out anomaly boxes in the scorecards
+late_sampling <- read.csv("AZOMP/01_raw_data/Cruise_bloom_date.csv") %>% dplyr::filter(AR7W_start_doy >= cutoff)
+late_sampling <- as.numeric(unique(unlist(late_sampling$year)))
+ref_years <- ref_years[!(ref_years %in% late_sampling)]
 
 
 #*******************************************************************************

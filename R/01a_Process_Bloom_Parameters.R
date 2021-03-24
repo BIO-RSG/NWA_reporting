@@ -25,12 +25,12 @@ first_year <- 2003
 last_year <- 2020
 
 # range of years to use for reference when computing climatology mean, standard deviation, and anomalies
-ref_years <- 1999:2010
+ref_years <- 2003:2010
 
 region_str <- c("GS", "CLS", "LAS")
 
 input_path <- "AZOMP/01_raw_data/"
-input_file <- "modis_atlantic_poly4_2003-2021_daily_loggedChla_Gaussian_created_2021-03-18-181022_fulltimeseries/bloom_fit_params.csv"
+input_file <- "modis_atlantic_poly4_2003-2021_daily_loggedChla_Gaussian_created_2021-03-24-142956_fulltimeseries/bloom_fit_params.csv"
 
 output_path <- "AZOMP/02_processed_data/"
 output_file <- paste0(output_path,"Bloom_parameters_processed_",sensor,"_",interval,"_refyears",paste0(range(ref_years), collapse="-"),"_timeseries",first_year,"-",last_year,".RData")

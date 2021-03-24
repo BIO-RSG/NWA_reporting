@@ -11,16 +11,18 @@ library(dplyr)
 years <- 1995:2020
 
 # region to use
-reg <- "CLS"
+reg <- "GS"
 
 path <- "AZOMP/01_raw_data/"
 
-fit_params <- "modis_atlantic_poly4_2003-2021_daily_loggedChla_Gaussian_created_2021-03-18-181022_fulltimeseries/bloom_fit_params.csv"
+fit_params <- "modis_atlantic_poly4_2003-2021_daily_loggedChla_Gaussian_created_2021-03-24-142956_fulltimeseries/bloom_fit_params.csv"
 cruise_dates <- "Cruise_bloom_date.csv"
 
 output_path <- "AZOMP/03_figures/"
 output_file <- paste0("Cruise_Bloom_dates_", reg, ".png")
 
+# cruise start day of year (if >= this day, the cruise is "late")
+cutoff <- 170
 
 #*******************************************************************************
 
@@ -35,8 +37,7 @@ df <- dplyr::left_join(read.csv(paste0(path, cruise_dates)) %>%
                        by="year")
 
 # get x axis limits based on cruise and bloom days, and x axis length for formatting
-xlim <- c(min(df %>% dplyr::select(-year), na.rm=TRUE),
-          max(df %>% dplyr::select(-year), na.rm=TRUE))
+xlim <- c(100,260)#c(min(df %>% dplyr::select(-year), na.rm=TRUE), max(df %>% dplyr::select(-year), na.rm=TRUE))
 xaxis_len <- diff(xlim)
 
 png(paste0(output_path, output_file), height = 900, width = 600, pointsize = 24)
@@ -58,6 +59,7 @@ for (i in 1:nrow(df)) {
          density = 85,
          border=NA)
 }
+abline(v=cutoff, col="red")
 # legend boxes
 vertical_offset <- 1.5
 rect(xlim[1],-(years[1]-vertical_offset)-0.45,

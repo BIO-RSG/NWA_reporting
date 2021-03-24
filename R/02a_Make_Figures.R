@@ -16,16 +16,17 @@ library(patchwork)
 source("R/custom_functions.R")
 
 # range of years to process
-first_year <- 1995
+first_year <- 2003
 last_year <- 2020
 
 # range of years to use for reference when computing climatology mean, standard
 # deviation, and anomalies (must match those used in processing)
-ref_years <- 1999:2010
+ref_years <- 2003:2010
+# Note that ref_years are not used in the scorecards, only in the time series plots, and in the TS plots you must have all ref years (including late sampling years) so that it can calculate the mean value for the full ref period, the ref period with only early years, and the ref period for only late years (so for this script, do NOT remove ref years based on the late_sampling vector)
 
 input_path <- "AZOMP/02_processed_data/"
 
-input_file <- "AZOMP_ChlaNutrients__refyears1999-2010_timeseries1995-2020_avg_profiledepth0-150_processed.RData"
+input_file <- "Bloom_parameters_processed_modis_daily_refyears2003-2010_timeseries2003-2020.RData"
 
 # location of figures
 output_path <- "AZOMP/03_figures/"
@@ -38,7 +39,7 @@ region_col <- c("darkgreen", "red", "blue")
 
 # type of input data
 # options: bloom, nutrients_shallow, nutrients_deep, chla, hplc, calanus, pseudo, euphausiids, temperature
-data_type <- "nutrients_shallow"
+data_type <- "bloom"
 
 # cutoff day of year between "early" and "late" sampling
 cutoff <- 170
@@ -49,7 +50,6 @@ late_sampling <- as.numeric(unique(unlist(late_sampling$year)))
 # Depth ranges used in profiles (must be the same as used in processing)
 depths1 <- c(0,100)
 depths2 <- c(100,Inf) # for no max depth, enter Inf
-
 
 
 # VARIABLES CONTROLLING THE FORMATTING AND LABELLING OF THE FIGURES, DEPENDING ON DATA_TYPE
@@ -208,7 +208,9 @@ df_anomaly <- dplyr::left_join(expand.grid(region=region_str,
                                by=c("region", "year", "variable"))
 
 # exclude any years?
-df_anomaly[df_anomaly$year %in% late_sampling, "anom_value"] <- NA
+if (data_type!="bloom") {
+    df_anomaly[df_anomaly$year %in% late_sampling, "anom_value"] <- NA
+}
 
 df_climatology <- dplyr::left_join(expand.grid(region=region_str,variable=variable_str, stringsAsFactors=FALSE),
                                    df_climatology_annual %>% dplyr::filter(region %in% region_str),

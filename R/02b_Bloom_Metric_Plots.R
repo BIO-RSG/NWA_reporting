@@ -13,7 +13,7 @@ library(patchwork)
 library(grid)
 library(stringr)
 
-path <- "AZOMP/01_raw_data/modis_atlantic_poly4_2003-2021_daily_loggedChla_Gaussian_created_2021-03-18-181022_fulltimeseries/"
+path <- "AZOMP/01_raw_data/modis_atlantic_poly4_2003-2021_daily_loggedChla_Gaussian_created_2021-03-24-142956_fulltimeseries/"
 
 output_path <- "AZOMP/03_figures/"
 
@@ -25,7 +25,7 @@ years <- 2003:2020                  # vector of years
 interval <- "daily"                 # temporal binning (daily or weekly)
 dailystat <- "mean"                 # daily/weekly statistic
 fitcov <- 20                        # required percent coverage for each day/week
-t_range <- c(100,299)                # range of days used for the fit
+t_range <- c(85,299)                # range of days used for the fit
 
 # # flag settings
 #
