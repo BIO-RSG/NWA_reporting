@@ -186,43 +186,19 @@ if (integrated_depth) {
     data("nwa_lats_4km", package="oceancolouR")
     data("nwa_lons_4km", package="oceancolouR")
     for (i in 1:length(annual_indices)) {
-        
-        # temporary: integrate the top layer, average the bottom layer
-        if (depth_layer[i]==1) {
-            tmp_depths <- depths1
-            df_data_depth_summary <- dplyr::bind_rows(df_data_depth_summary,
-                                                      df_data_avg_method %>%
-                                                          dplyr::filter(parameter_name==param_names[i], start_depth >= tmp_depths[1], start_depth < tmp_depths[2]) %>%
-                                                          dplyr::group_by(event_id) %>%
-                                                          dplyr::summarize(nominal_depth=get_bathy(mean(longitude), mean(latitude), vlon=nwa_lons_4km, vlat=nwa_lats_4km, vvar=nwa_bath_4km),
-                                                                           value=DIS_Integrate_Profile(depth=start_depth, value=data_value, nominal_depth=nominal_depth, depth_range=tmp_depths)) %>%
-                                                          dplyr::ungroup() %>%
-                                                          dplyr::mutate(parameter_name=annual_indices[i]))
-        } else if (depth_layer[i]==2) {
-            tmp_depths <- depths2
-            if (is.infinite(tmp_depths[2])) {tmp_depths[2] <- 10000}
-            df_data_depth_summary <- dplyr::bind_rows(df_data_depth_summary,
-                                                      df_data_avg_method %>%
-                                                          dplyr::filter(parameter_name==param_names[i], start_depth >= tmp_depths[1], start_depth < tmp_depths[2]) %>%
-                                                          dplyr::group_by(event_id) %>%
-                                                          dplyr::summarize(value=ifelse(sum(is.finite(data_value))==0, NA, mean(data_value, na.rm=TRUE))) %>%
-                                                          dplyr::ungroup() %>%
-                                                          dplyr::mutate(parameter_name=annual_indices[i]))
-        }
-        
-        
-        # if (depth_layer[i]==1) {tmp_depths <- depths1
-        # } else if (depth_layer[i]==2) {tmp_depths <- depths2}
-        # if (is.infinite(tmp_depths[2])) {tmp_depths[2] <- 10000}
-        # df_data_depth_summary <- dplyr::bind_rows(df_data_depth_summary,
-        #                                           df_data_avg_method %>%
-        #                                               dplyr::filter(parameter_name==param_names[i], start_depth >= tmp_depths[1], start_depth < tmp_depths[2]) %>%
-        #                                               dplyr::group_by(event_id) %>%
-        #                                               dplyr::summarize(nominal_depth=get_bathy(mean(longitude), mean(latitude), vlon=nwa_lons_4km, vlat=nwa_lats_4km, vvar=nwa_bath_4km),
-        #                                                                value=DIS_Integrate_Profile(depth=start_depth, value=data_value, nominal_depth=nominal_depth, depth_range=tmp_depths)) %>%
-        #                                               dplyr::ungroup() %>%
-        #                                               dplyr::mutate(parameter_name=annual_indices[i]))
-        
+        if (depth_layer[i]==1) {tmp_depths <- depths1
+        } else if (depth_layer[i]==2) {tmp_depths <- depths2}
+        if (is.infinite(tmp_depths[2])) {tmp_depths[2] <- 10000}
+        df_data_depth_summary <- dplyr::bind_rows(df_data_depth_summary,
+                                                  df_data_avg_method %>%
+                                                      dplyr::filter(parameter_name==param_names[i], start_depth >= tmp_depths[1], start_depth < tmp_depths[2]) %>%
+                                                      dplyr::group_by(event_id) %>%
+                                                      dplyr::summarize(nominal_depth=get_bathy(mean(longitude), mean(latitude), vlon=nwa_lons_4km, vlat=nwa_lats_4km, vvar=nwa_bath_4km),
+                                                                       value=ifelse(sum(is.finite(data_value))==0, NA,
+                                                                                    ifelse(sum(is.finite(data_value))==1, mean(data_value, na.rm=TRUE),
+                                                                                           DIS_Integrate_Profile(depth=start_depth, value=data_value, nominal_depth=nominal_depth, depth_range=tmp_depths)))) %>%
+                                                      dplyr::ungroup() %>%
+                                                      dplyr::mutate(parameter_name=annual_indices[i]))
     }
     
 } else {
